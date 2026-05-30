@@ -4,12 +4,12 @@ This document tracks what has been implemented, what remains, and the recommende
 
 ## Current Status
 
-The project has a working p5.js chess board foundation. Pieces can be rendered, selected, highlighted, moved, captured, validated against movement rules, and filtered for king safety.
+The project has a working p5.js chess board foundation. Pieces can be rendered, selected, highlighted, moved, captured, validated against movement rules, filtered for king safety, and ended by checkmate.
 
 Estimated completion:
 
-- Basic playable board: about 60%.
-- Complete legal chess game: about 45%.
+- Basic playable board: about 70%.
+- Complete legal chess game: about 55%.
 
 ## Completed
 
@@ -90,15 +90,22 @@ Estimated completion:
 - Pinned pieces cannot move away if that exposes their own king.
 - Move highlights now exclude moves that leave the king in check.
 
+### Checkmate
+
+- `getLegalMoves(color)` generates all legal moves for a side.
+- `isCheckmate(color)` detects when a checked side has no legal moves.
+- `updateGameStatus()` now supports `active`, `check`, and `checkmate`.
+- Moves after checkmate are rejected.
+- Checkmate status message names the winning side.
+
 ## Not Yet Implemented
 
 ### Check and End Conditions
 
-- Detect checkmate.
 - Detect stalemate.
-- Prevent moves after the game has ended.
+- Prevent moves after stalemate or future draw states.
  
-Check status is now exposed through the `active` and `check` game states. The game does not yet expose full checkmate/stalemate status flow.
+Check and checkmate status are now exposed through the `active`, `check`, and `checkmate` game states. The game does not yet expose stalemate status flow.
 
 ### Special Moves
 
@@ -115,7 +122,7 @@ Check status is now exposed through the `active` and `check` game states. The ga
 
 ### Game State Improvements
 
-- Add explicit game status values for `checkmate` and `stalemate`.
+- Add explicit game status value for `stalemate`.
 - Track en passant target square.
 - Track castling rights.
 - Track halfmove clock.
@@ -132,12 +139,10 @@ Check status is now exposed through the `active` and `check` game states. The ga
 
 ## Recommended Next Steps
 
-### Phase 1: Check, Checkmate, and Stalemate
+### Phase 1: Stalemate
 
 Implement:
 
-- `getLegalMoves(color)`
-- `isCheckmate(color)`
 - `isStalemate(color)`
 - `updateGameStatus()`
 
@@ -182,8 +187,9 @@ Implement draw rules after the core game works:
 | Capture handling | Done |
 | Move highlighting | Done |
 | King safety | Done |
-| Check detection | Partial |
-| Checkmate/stalemate | Remaining |
+| Check detection | Done |
+| Checkmate | Done |
+| Stalemate | Remaining |
 | Promotion | Remaining |
 | Castling | Remaining |
 | En passant | Remaining |

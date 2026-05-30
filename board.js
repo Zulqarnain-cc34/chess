@@ -289,6 +289,10 @@ class ChessGame {
 
   validateMove(fromSquareName, toSquareName) {
 
+    if (this.status === "checkmate") {
+      return { ok: false, reason: "game_over", message: "The game is over by checkmate." };
+    }
+
     if (!fromSquareName || !toSquareName || fromSquareName === toSquareName) {
       // This rejects invalid moves:
       // makeMove( "e2", "e2" ) // This is not a valid move.
@@ -371,17 +375,60 @@ class ChessGame {
     return destinations;
   }
 
+  getLegalMoves(color = this.sideToMove) {
+    // Remember whose turn it currently is
+    const originalSideToMove = this.sideToMove;
+    const moves = [];
+
+    // Temporarily switch to the color to get all legal moves for that color
+    this.sideToMove = color;
+
+    for (const fromSquare of this.board.squares.values()) {
+      // We check if the square is empty or the piece is not the same color as the current player.
+      if (!fromSquare.piece || fromSquare.piece.color !== color) {
+        continue;
+      }
+      // We now have all the squares on the board that have a piece of the same color as the current player.
+      for (const toSquare of this.board.squares.values()) {
+        // We check if the move is legal.
+        if (this.validateMove(fromSquare.name, toSquare.name).ok) {
+          // If the move is legal, we add it to the moves array.
+          moves.push({ from: fromSquare.name, to: toSquare.name });
+        }
+      }
+    }
+
+    // We switch the turn back to the original color.
+    this.sideToMove = originalSideToMove;
+    return moves;
+  }
+
   updateGameStatus() {
-    this.status = this.isKingInCheck(this.sideToMove) ? "check" : "active";
+    if (this.isCheckmate(this.sideToMove)) {
+      this.status = "checkmate";
+    } else if (this.isKingInCheck(this.sideToMove)) {
+      this.status = "check";
+    } else {
+      this.status = "active";
+    }
+
     return this.status;
   }
 
   getStatusMessage() {
+    if (this.status === "checkmate") {
+      return `Checkmate. ${this.capitalize(this.getOpponentColor(this.sideToMove))} wins.`;
+    }
+
     if (this.status === "check") {
       return `${this.capitalize(this.sideToMove)} is in check.`;
     }
 
     return `${this.capitalize(this.sideToMove)} to move.`;
+  }
+
+  isCheckmate(color) {
+    return this.isKingInCheck(color) && this.getLegalMoves(color).length === 0;
   }
 
   findKing(color) {
