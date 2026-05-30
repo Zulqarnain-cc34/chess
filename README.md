@@ -82,4 +82,4 @@ The goal is to build a strong foundation that can later be extended into a compl
 
 ## License
 
-This project is for learning and experimentation.
+This project is licensed under the MIT License. See `LICENSE` for details.
