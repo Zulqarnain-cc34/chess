@@ -10,7 +10,7 @@ A browser-based chess game built with **JavaScript** and **p5.js**. The project 
 
 ## About The Project
 
-This project implements a playable chess board from scratch using custom JavaScript classes for the game, board, squares, and pieces. It is designed as a learning project, so the rules are implemented in a clear step-by-step way instead of relying on an external chess engine.
+This project implements a playable chess board from scratch using custom JavaScript classes for the game, board, squares, and pieces.
 
 The game currently supports piece rendering, turn-based movement, legal move highlighting, captures, king safety, check, checkmate, stalemate, and automatic pawn promotion.
 
@@ -29,12 +29,6 @@ The game currently supports piece rendering, turn-based movement, legal move hig
 - Check, checkmate, and stalemate status messages are displayed.
 - Pawns automatically promote to queens on the final rank.
 
-## Tech Stack
-
-- HTML
-- CSS
-- JavaScript
-- p5.js
 
 ## Project Structure
 
@@ -78,7 +72,6 @@ http://localhost:8000
 The project is not complete. These rules are not implemented yet:
 
 - Castling
-- En passant
 - Promotion choice UI for selecting queen, rook, bishop, or knight
 
 ## Why I Built This
