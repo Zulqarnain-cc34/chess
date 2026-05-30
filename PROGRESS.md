@@ -4,12 +4,12 @@ This document tracks what has been implemented, what remains, and the recommende
 
 ## Current Status
 
-The project has a working p5.js chess board foundation. Pieces can be rendered, selected, highlighted, moved, captured, validated against movement rules, filtered for king safety, and ended by checkmate.
+The project has a working p5.js chess board foundation. Pieces can be rendered, selected, highlighted, moved, captured, validated against movement rules, filtered for king safety, ended by checkmate, stalemate, or draw rules, and pawns can promote automatically.
 
 Estimated completion:
 
-- Basic playable board: about 70%.
-- Complete legal chess game: about 55%.
+- Basic playable board: about 85%.
+- Complete legal chess game: about 75%.
 
 ## Completed
 
@@ -94,86 +94,70 @@ Estimated completion:
 
 - `getLegalMoves(color)` generates all legal moves for a side.
 - `isCheckmate(color)` detects when a checked side has no legal moves.
-- `updateGameStatus()` now supports `active`, `check`, and `checkmate`.
+- `updateGameStatus()` now supports `active`, `check`, `checkmate`, and `stalemate`.
 - Moves after checkmate are rejected.
 - Checkmate status message names the winning side.
 
+### Stalemate
+
+- `isStalemate(color)` detects when a side is not in check but has no legal moves.
+- Stalemate ends the game as a draw.
+- Moves after stalemate are rejected.
+
+### Promotion
+
+- Pawns automatically promote to queens on the final rank.
+- White pawns promote on rank `8`.
+- Black pawns promote on rank `1`.
+- Promotion is recorded in move history.
+
+### Draw Rules
+
+- Insufficient material detection is implemented.
+- Fifty-move rule detection is implemented with a halfmove clock.
+- The halfmove clock resets after pawn moves and captures.
+- Threefold repetition detection is implemented with position history.
+- Draw status messages are displayed in the UI.
+- Moves after draw states are rejected.
+
 ## Not Yet Implemented
-
-### Check and End Conditions
-
-- Detect stalemate.
-- Prevent moves after stalemate or future draw states.
- 
-Check and checkmate status are now exposed through the `active`, `check`, and `checkmate` game states. The game does not yet expose stalemate status flow.
 
 ### Special Moves
 
-- Pawn promotion.
 - Castling.
 - En passant.
 
 ### Draw Rules
 
-- Insufficient material.
-- Fifty-move rule.
-- Threefold repetition.
 - Mutual draw agreement UI.
 
 ### Game State Improvements
 
-- Add explicit game status value for `stalemate`.
 - Track en passant target square.
 - Track castling rights.
-- Track halfmove clock.
 - Track fullmove number.
-- Track repetition history.
 
 ### Testing
 
 - Add repeatable test helpers or a small test file.
 - Test every piece movement rule.
 - Test illegal moves.
-- Test check/checkmate/stalemate once implemented.
+- Test check/checkmate/stalemate/draw states.
 - Test special moves once implemented.
 
 ## Recommended Next Steps
 
-### Phase 1: Stalemate
+### Phase 1: En Passant
 
-Implement:
+Track the en passant target square after a two-square pawn move and allow the capture only on the immediately following move.
 
-- `isStalemate(color)`
-- `updateGameStatus()`
-
-### Phase 2: Promotion
-
-Implement pawn promotion when a pawn reaches:
-
-- Rank `8` for White.
-- Rank `1` for Black.
-
-Start with automatic queen promotion, then add UI choice later.
-
-### Phase 3: Castling
+### Phase 2: Castling
 
 Track castling rights and implement:
 
 - Kingside castling.
 - Queenside castling.
 - Castling restrictions through check.
-
-### Phase 4: En Passant
-
-Track the en passant target square after a two-square pawn move and allow the capture only on the immediately following move.
-
-### Phase 5: Draw Rules
-
-Implement draw rules after the core game works:
-
-- Insufficient material.
-- Fifty-move rule.
-- Threefold repetition.
 
 ## Done / In Progress / Remaining
 
@@ -189,11 +173,11 @@ Implement draw rules after the core game works:
 | King safety | Done |
 | Check detection | Done |
 | Checkmate | Done |
-| Stalemate | Remaining |
-| Promotion | Remaining |
+| Stalemate | Done |
+| Promotion | Done |
 | Castling | Remaining |
 | En passant | Remaining |
-| Draw rules | Remaining |
+| Draw rules | Done |
 | Full test coverage | Remaining |
 
 ## Definition of Done

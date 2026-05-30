@@ -268,12 +268,15 @@ class ChessGame {
 
     // We move the piece to the new square.
     this.board.movePiece(fromSquareName, toSquareName);
+    // If a pawn reaches the last rank, it becomes a queen.
+    const promotion = this.promotePawnIfNeeded(toSquareName);
     // We add the move to the move history.
     this.moveHistory.push({
       from: fromSquareName,
       to: toSquareName,
       piece: movingPiece, // The piece that is moving.
       capturedPiece, // The piece that is being captured.
+      promotion,
       color: this.sideToMove, // The color of the player whose turn it is.
     });
     // We switch the turn to the opponent.
@@ -289,8 +292,8 @@ class ChessGame {
 
   validateMove(fromSquareName, toSquareName) {
 
-    if (this.status === "checkmate") {
-      return { ok: false, reason: "game_over", message: "The game is over by checkmate." };
+    if (this.status === "checkmate" || this.status === "stalemate") {
+      return { ok: false, reason: "game_over", message: `The game is over by ${this.status}.` };
     }
 
     if (!fromSquareName || !toSquareName || fromSquareName === toSquareName) {
@@ -406,6 +409,8 @@ class ChessGame {
   updateGameStatus() {
     if (this.isCheckmate(this.sideToMove)) {
       this.status = "checkmate";
+    } else if (this.isStalemate(this.sideToMove)) {
+      this.status = "stalemate";
     } else if (this.isKingInCheck(this.sideToMove)) {
       this.status = "check";
     } else {
@@ -420,6 +425,10 @@ class ChessGame {
       return `Checkmate. ${this.capitalize(this.getOpponentColor(this.sideToMove))} wins.`;
     }
 
+    if (this.status === "stalemate") {
+      return "Stalemate. The game is a draw.";
+    }
+
     if (this.status === "check") {
       return `${this.capitalize(this.sideToMove)} is in check.`;
     }
@@ -429,6 +438,34 @@ class ChessGame {
 
   isCheckmate(color) {
     return this.isKingInCheck(color) && this.getLegalMoves(color).length === 0;
+  }
+
+  isStalemate(color) {
+    return !this.isKingInCheck(color) && this.getLegalMoves(color).length === 0;
+  }
+
+  promotePawnIfNeeded(squareName) {
+    const square = this.board.getSquareByName(squareName);
+    const piece = square.piece;
+
+    if (!piece || piece.type !== "pawn") {
+      return null;
+    }
+
+    const finalRank = piece.color === "white" ? BLACK_BACK_RANK : WHITE_BACK_RANK;
+
+    if (square.rank !== finalRank) {
+      return null;
+    }
+
+    square.placePiece(new ChessPiece("queen", piece.color));
+
+    return {
+      from: "pawn",
+      to: "queen",
+      square: square.name,
+      color: piece.color,
+    };
   }
 
   findKing(color) {

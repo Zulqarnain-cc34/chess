@@ -102,12 +102,24 @@ function drawLabels(perspective) {
 }
 
 function drawStatus() {
-  fill(game.status === "check" ? "#b42318" : 35);
+  fill(getStatusColor());
   noStroke();
-  textSize(16);
+  textSize(game.status === "checkmate" || game.status === "stalemate" ? 18 : 16);
   textFont("sans-serif");
   text(game.lastMoveResult.message, width / 2, boardPadding + boardPixelSize + 40);
   textFont("serif");
+}
+
+function getStatusColor() {
+  if (game.status === "check" || game.status === "checkmate") {
+    return "#b42318";
+  }
+
+  if (game.status === "stalemate") {
+    return "#7a4d00";
+  }
+
+  return 35;
 }
 
 function mousePressed() {
