@@ -433,21 +433,26 @@ class ChessGame {
   }
 
   isValidPawnMove(fromSquare, toSquare, fileDelta, rankDelta) {
+    // The direction is the direction of the pawn's movement.
     const direction = fromSquare.piece.color === "white" ? 1 : -1;
+    // The starting rank is the rank of the pawn's starting position.
     const startingRank = fromSquare.piece.color === "white" ? WHITE_PAWN_RANK : BLACK_PAWN_RANK;
+    // The isSingleForward is a boolean that is true if the pawn is moving one square forward.
     const isSingleForward = fileDelta === 0 && rankDelta === direction && !toSquare.isOccupied();
+    // The isDoubleForward is a boolean that is true if the pawn is moving two squares forward.
     const isDoubleForward =
       fileDelta === 0 &&
       rankDelta === direction * 2 &&
       fromSquare.rank === startingRank &&
       !toSquare.isOccupied() &&
       !this.board.getSquare(fromSquare.file, fromSquare.rank + direction).isOccupied();
+    // The isDiagonalCapture is a boolean that is true if the pawn is capturing a piece diagonally forward.
     const isDiagonalCapture =
       Math.abs(fileDelta) === 1 &&
       rankDelta === direction &&
       toSquare.isOccupied() &&
       toSquare.piece.color !== fromSquare.piece.color;
-
+    // The isValidPawnMove is a boolean that is true if the pawn is moving one square forward, two squares forward, or capturing a piece diagonally forward.
     return isSingleForward || isDoubleForward || isDiagonalCapture;
   }
 
