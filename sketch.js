@@ -102,7 +102,7 @@ function drawLabels(perspective) {
 }
 
 function drawStatus() {
-  fill(35);
+  fill(game.status === "check" ? "#b42318" : 35);
   noStroke();
   textSize(16);
   textFont("sans-serif");

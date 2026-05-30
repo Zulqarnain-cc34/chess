@@ -250,6 +250,7 @@ class ChessGame {
     this.sideToMove = "white";  // White always moves first. Players then alternate turns.
     this.perspective = "white";  // The perspective of the board is from White's perspective.
     this.moveHistory = [];  // The move history is an array of moves.
+    this.status = "active";
     this.lastMoveResult = { ok: true, message: "White to move." };  // The last move result is an object with ok and message properties.
   }
 
@@ -277,8 +278,10 @@ class ChessGame {
     });
     // We switch the turn to the opponent.
     this.sideToMove = this.getOpponentColor(this.sideToMove);
+    // We update the game status after the move.
+    this.updateGameStatus();
     // We update the last move result.
-    this.lastMoveResult = { ok: true, message: `${this.capitalize(this.sideToMove)} to move.` };
+    this.lastMoveResult = { ok: true, message: this.getStatusMessage() };
 
     // We return the last move result.
     return this.lastMoveResult;
@@ -329,6 +332,13 @@ class ChessGame {
       };
     } // Rule 5: You cannot move onto your own piece
 
+    if (toSquare.piece?.type === "king") {
+      return {
+        ok: false,
+        reason: "king_capture",
+        message: "The king is never captured in legal chess.",
+      };
+    }
 
     if (!this.pieceFollowsMovementRules(fromSquare, toSquare)) {
       return {
@@ -337,6 +347,14 @@ class ChessGame {
         message: `${this.capitalize(fromSquare.piece.type)} cannot move that way.`,
       };
     } // Rule 6: The piece must move according to its movement rules
+
+    if (this.wouldLeaveKingInCheck(fromSquareName, toSquareName)) {
+      return {
+        ok: false,
+        reason: "king_in_check",
+        message: "That move would leave your king in check.",
+      };
+    } // Rule 7: The move must not leave the moving player's king in check
 
     return { ok: true, message: "Move is legal for the current turn rules." };
   }
@@ -351,6 +369,132 @@ class ChessGame {
     }
 
     return destinations;
+  }
+
+  updateGameStatus() {
+    this.status = this.isKingInCheck(this.sideToMove) ? "check" : "active";
+    return this.status;
+  }
+
+  getStatusMessage() {
+    if (this.status === "check") {
+      return `${this.capitalize(this.sideToMove)} is in check.`;
+    }
+
+    return `${this.capitalize(this.sideToMove)} to move.`;
+  }
+
+  findKing(color) {
+    // We find the king of the given color.
+    for (const square of this.board.squares.values()) {
+      if (square.piece?.type === "king" && square.piece.color === color) {
+        return square;
+      }
+    }
+
+    return null;
+  }
+
+  isKingInCheck(color) {
+    // We find the king of the given color.
+    const kingSquare = this.findKing(color);
+
+    // If we cannot find the king, we throw an error.
+    if (!kingSquare) {
+      throw new Error(`Cannot find ${color} king.`);
+    }
+
+    // We check if the king is attacked by the opponent.
+    return this.isSquareAttacked(kingSquare.name, this.getOpponentColor(color));
+  }
+
+  isSquareAttacked(squareName, byColor) {
+    // We get the target square.
+    const targetSquare = this.board.getSquareByName(squareName);
+
+    // We check if the target square is attacked by the opponent.
+    for (const square of this.board.squares.values()) {
+      // We check if the square is occupied by a piece.
+      // If the square is not occupied by a piece, we continue.
+      // If the piece is not the same color as the opponent, we continue.
+      if (!square.piece || square.piece.color !== byColor) {
+        continue;
+      }
+
+      // We check if the piece attacks the target square.
+      if (this.pieceAttacksSquare(square, targetSquare)) {
+        // If the piece attacks the target square, we return true.
+        return true;
+      }
+    }
+
+    // If we cannot find a piece that attacks the target square, we return false.
+    return false;
+  }
+
+  pieceAttacksSquare(fromSquare, targetSquare) {
+    // We get the piece that is attacking the target square.
+    const piece = fromSquare.piece;
+    const fileDelta = FILES.indexOf(targetSquare.file) - FILES.indexOf(fromSquare.file);
+    const rankDelta = targetSquare.rank - fromSquare.rank;
+    const absFileDelta = Math.abs(fileDelta);
+    const absRankDelta = Math.abs(rankDelta);
+
+    switch (piece.type) {
+      case "king":
+        // The king can move in all 8 directions, but only one square at a time.
+        return absFileDelta <= 1 && absRankDelta <= 1 && (absFileDelta !== 0 || absRankDelta !== 0);
+      case "queen":
+        // The queen can move in all directions, and any number of squares.
+        return this.isStraightLineMove(fileDelta, rankDelta) && this.board.hasClearPath(fromSquare, targetSquare);
+      case "rook":
+        // The rook can move in all orthogonal directions, and any number of squares.
+        return this.isOrthogonalMove(fileDelta, rankDelta) && this.board.hasClearPath(fromSquare, targetSquare);
+      case "bishop":
+        // The bishop can move in all diagonal directions, and any number of squares.
+        return this.isDiagonalMove(fileDelta, rankDelta) && this.board.hasClearPath(fromSquare, targetSquare);
+      case "knight":
+        // The knight can move in an L shape.
+        return (absFileDelta === 2 && absRankDelta === 1) || (absFileDelta === 1 && absRankDelta === 2);
+      case "pawn":
+        // The pawn can capture one square diagonally forward.
+        // The pawn can move two squares only from its starting rank.
+        // The pawn can move one square forward into empty squares.
+        return this.pawnAttacksSquare(fromSquare, fileDelta, rankDelta);
+      default:
+        return false;
+    }
+  }
+
+  pawnAttacksSquare(fromSquare, fileDelta, rankDelta) {
+    // The direction is the direction of the pawn's movement.
+    const direction = fromSquare.piece.color === "white" ? 1 : -1;
+    return Math.abs(fileDelta) === 1 && rankDelta === direction;
+  }
+
+  wouldLeaveKingInCheck(fromSquareName, toSquareName) {
+    const fromSquare = this.board.getSquareByName(fromSquareName);
+    const toSquare = this.board.getSquareByName(toSquareName);
+    const movingPiece = fromSquare.piece;
+    const capturedPiece = toSquare.piece;
+    const movingColor = movingPiece.color;
+
+    // Temporarily make the move on the board.
+    // This is only a simulation, not the final move.
+    toSquare.placePiece(movingPiece);
+    fromSquare.placePiece(null);
+
+    // After the simulated move, ask:
+    // "Is my own king attacked by the opponent?"
+    // If yes, this move is illegal because it leaves the king in check.
+    const leavesKingInCheck = this.isKingInCheck(movingColor);
+    
+    // Undo the simulation so the real board goes back to exactly how it was.
+    // The real move will only happen later inside makeMove() if validation passes.
+    fromSquare.placePiece(movingPiece);
+    toSquare.placePiece(capturedPiece);
+
+    return leavesKingInCheck;
   }
 
   pieceFollowsMovementRules(fromSquare, toSquare) {
